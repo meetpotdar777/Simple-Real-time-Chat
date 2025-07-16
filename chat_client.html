@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Real-time Chat</title>
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Lighter, subtle blue-gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px; /* Add some padding around the app */
+            box-sizing: border-box;
+        }
+        .app-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* Consistent rounded corners */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1); /* Deeper, softer shadow */
+            width: 100%;
+            max-width: 1050px; /* Slightly wider for more spacious feel */
+            height: 90vh; 
+            max-height: 750px; /* Slightly taller */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #e2e8f0; /* Subtle border */
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            padding: 2.5rem;
+            text-align: center;
+            background: linear-gradient(135deg, #e0f2f7 0%, #c8e6c9 100%); /* Softer, inviting gradient */
+        }
+        .welcome-screen h2 {
+            font-size: 2.8rem; /* Even larger heading */
+            font-weight: 800; /* Extra bold */
+            margin-bottom: 1.2rem;
+            color: #00796b; /* Darker teal */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.15);
+        }
+        .welcome-screen p {
+            font-size: 1.2rem;
+            color: #388e3c; /* Complementary green */
+            margin-bottom: 2.5rem;
+            max-width: 400px;
+        }
+        .welcome-screen input {
+            padding: 1.1rem; /* More padding */
+            border: 2px solid #a5d6a7; /* Softer green border */
+            border-radius: 0.75rem; 
+            width: 85%; /* Wider input */
+            max-width: 380px;
+            font-size: 1.15rem;
+            outline: none;
+            margin-bottom: 1.8rem;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.08); /* More pronounced inset shadow */
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .welcome-screen input:focus {
+            border-color: #2e7d32; /* Darker green on focus */
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.15), 0 0 0 3px rgba(76, 175, 80, 0.3); /* Focus ring */
+        }
+        .welcome-screen button {
+            background: linear-gradient(45deg, #4CAF50, #2e7d32); /* Stronger green gradient */
+            color: white;
+            padding: 1.1rem 3rem; /* Larger button */
+            border-radius: 2.5rem; /* More pill-shaped */
+            font-weight: 700;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25); /* Deeper shadow */
+            border: none;
+            letter-spacing: 0.5px;
+        }
+        .welcome-screen button:hover {
+            transform: translateY(-3px) scale(1.02); /* More pronounced lift */
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.35);
+            background: linear-gradient(45deg, #388e3c, #1b5e20); /* Darker hover gradient */
+        }
+
+        /* Main Chat Layout */
+        .main-chat-layout {
+            display: none; 
+            flex-direction: row;
+            width: 100%;
+            height: 100%;
+        }
+        .main-chat-layout.show {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 300px; /* Wider sidebar */
+            background-color: #f8fbfd; /* Very light blue-gray */
+            border-right: 1px solid #e2e8f0;
+            padding: 1.8rem 1.2rem; /* More padding */
+            display: flex;
+            flex-direction: column;
+            border-top-left-radius: 1.5rem;
+            border-bottom-left-radius: 1.5rem;
+        }
+        .sidebar-header {
+            font-weight: 800; /* Extra bold */
+            font-size: 1.4rem; /* Larger header */
+            margin-bottom: 1.8rem;
+            color: #0d47a1; /* Deep blue for emphasis */
+            text-align: center;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .active-users-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-right: 0.6rem; 
+        }
+        .user-item {
+            padding: 0.8rem 1.2rem; /* More padding */
+            margin-bottom: 0.6rem;
+            border-radius: 0.8rem; /* More rounded */
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+            display: flex;
+            align-items: center;
+            font-size: 1.05rem; /* Slightly larger text */
+            color: #4a5568; /* Darker gray text */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05); /* Softer, slightly larger shadow */
+            border: 1px solid #edf2f7; /* Light border */
+        }
+        .user-item:hover {
+            background-color: #e2e8f0; /* Lighter hover */
+            transform: translateY(-2px); /* More pronounced lift */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .user-item.selected {
+            background: linear-gradient(45deg, #d4edda, #c3e6cb); /* Subtle green gradient for selected */
+            font-weight: 700;
+            color: #1a202c; /* Darker text for selected */
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            border-color: #68d391; /* Green border for selected */
+        }
+        .user-item.self {
+            font-weight: 800; /* Even bolder for self */
+            color: #075e54; /* WhatsApp green */
+            background-color: #e6fffa; /* Very light teal for self */
+            border-color: #4fd1c5;
+        }
+        .user-status-dot {
+            width: 11px; /* Slightly larger dot */
+            height: 11px;
+            background-color: #25d366; 
+            border-radius: 50%;
+            margin-right: 0.8rem; 
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.7); /* More prominent white border */
+            box-shadow: 0 0 5px rgba(37, 211, 102, 0.5); /* Glowing effect */
+        }
+
+        .chat-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #fcfcfc; /* Cleaner white background */
+            background-image: url('https://www.transparenttextures.com/patterns/clean-textile.png'); 
+            position: relative; /* For the scroll to bottom button */
+        }
+        .chat-header {
+            background: linear-gradient(90deg, #075e54, #128c7e); /* Horizontal gradient */
+            color: white;
+            padding: 1.5rem 1.5rem; /* More padding */
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.35rem; /* Larger header */
+            position: relative; 
+            border-top-right-radius: 1.5rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1); /* Deeper shadow */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px; /* Space for potential icons */
+        }
+        .connection-status {
+            position: absolute;
+            bottom: 0.6rem;
+            right: 1.5rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.95);
+            font-weight: 500;
+        }
+        .messages {
+            flex-grow: 1;
+            padding: 1.2rem; /* More padding */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.7rem; /* Gap between messages */
+            scroll-behavior: smooth; /* Smooth scrolling */
+        }
+        .message-bubble {
+            max-width: 70%; /* Slightly narrower for better readability */
+            padding: 0.85rem 1.2rem; /* More padding */
+            border-radius: 1.2rem; /* More rounded */
+            word-wrap: break-word;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08); /* Softer, slightly larger shadow */
+            position: relative;
+            font-size: 1rem;
+            line-height: 1.4;
+            transition: transform 0.1s ease;
+        }
+        .message-bubble:hover {
+            transform: translateY(-1px);
+        }
+        .message-bubble.sent {
+            background-color: #dcf8c6; /* Light green for sent messages */
+            align-self: flex-end;
+            margin-left: auto;
+            border-bottom-right-radius: 0.4rem; /* More pronounced tail */
+        }
+        .message-bubble.received {
+            background-color: #ffffff; /* White for received messages */
+            align-self: flex-start;
+            margin-right: auto;
+            border-bottom-left-radius: 0.4rem; /* More pronounced tail */
+        }
+        .message-bubble.system {
+            background-color: rgba(207, 233, 186, 0.9); /* Lighter green with less transparency */
+            text-align: center;
+            font-style: italic;
+            font-size: 0.85rem;
+            color: #4a5568;
+            max-width: 85%; 
+            margin-left: auto;
+            margin-right: auto;
+            padding: 0.6rem 1.2rem;
+            border-radius: 1rem;
+            box-shadow: none; 
+        }
+        .message-bubble .username {
+            font-size: 0.85rem; /* Slightly larger */
+            color: #1a237e; /* Darker blue for username */
+            margin-bottom: 0.25rem;
+            font-weight: 700;
+            display: block; /* Ensure it's on its own line */
+        }
+        .message-bubble.sent .username {
+            color: #004d40; /* Darker green for own username */
+        }
+        .message-bubble .text {
+            font-size: 1.05rem; /* Slightly larger text */
+            color: #2d3748; /* Darker text */
+        }
+        .message-bubble .timestamp {
+            font-size: 0.65rem; /* Slightly larger timestamp */
+            color: #888;
+            text-align: right;
+            margin-top: 0.3rem;
+            display: block; 
+        }
+        .input-area {
+            display: flex;
+            flex-direction: column; 
+            padding: 1.2rem; /* More padding */
+            background-color: #f7fafc; /* Lighter input area background */
+            border-bottom-right-radius: 1.5rem;
+            box-shadow: 0 -3px 10px rgba(0,0,0,0.05); /* Stronger top shadow */
+            gap: 0.8rem; /* Space between recipient display and input */
+        }
+        .input-area .flex { 
+            align-items: center;
+        }
+        .input-area input {
+            flex-grow: 1;
+            padding: 0.9rem 1.4rem; /* More padding */
+            border: 1px solid #cbd5e0; /* Softer border */
+            border-radius: 2.5rem; /* More pill-shaped */
+            margin-right: 0.8rem;
+            font-size: 1.05rem;
+            outline: none;
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.08);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .input-area input:focus {
+            border-color: #38a169; /* Green on focus */
+            box-shadow: inset 0 1px 4px rgba(0,0,0,0.12), 0 0 0 3px rgba(56, 161, 105, 0.2);
+        }
+        .input-area button {
+            background: linear-gradient(45deg, #25d366, #075e54); /* Stronger green gradient */
+            color: white;
+            padding: 0.9rem; /* Adjust padding for circular button */
+            border-radius: 50%; 
+            width: 52px; /* Slightly larger circular button */
+            height: 52px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.3rem; /* Larger icon size */
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+            border: none;
+        }
+        .input-area button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.35);
+            background: linear-gradient(45deg, #075e54, #054a3e);
+        }
+        .private-message-indicator {
+            font-size: 0.8rem;
+            color: #075e54; 
+            font-weight: 700;
+            margin-right: 6px;
+        }
+        .recipient-display {
+            background-color: #e2e8f0; /* Lighter background */
+            padding: 0.6rem 1.2rem; /* More padding */
+            border-radius: 1.8rem; /* More rounded */
+            margin-bottom: 0.8rem; 
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1rem;
+            color: #4a5568;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .clear-recipient-btn {
+            background: none;
+            border: none;
+            color: #718096; /* Darker gray for 'x' */
+            font-size: 1.5rem; /* Larger 'x' */
+            cursor: pointer;
+            margin-left: 12px;
+            line-height: 1; 
+            transition: transform 0.2s ease, color 0.2s ease;
+        }
+        .clear-recipient-btn:hover {
+            color: #2d3748;
+            transform: rotate(90deg); 
+        }
+
+        /* Typing Indicator Styles */
+        #typing-indicator {
+            min-height: 1.8rem; /* Reserve more space */
+            padding: 0.5rem 1.5rem; /* More padding */
+            font-size: 0.9rem; /* Slightly larger */
+            color: #555;
+            font-style: italic;
+            text-align: left;
+            opacity: 0; 
+            transition: opacity 0.3s ease-in-out;
+        }
+        #typing-indicator.show {
+            opacity: 1;
+        }
+
+        /* Custom Alert Modal */
+        .custom-alert-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s ease;
+        }
+        .custom-alert-modal.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .custom-alert-content {
+            background-color: white;
+            padding: 2.5rem; /* More padding */
+            border-radius: 1rem; /* Rounded */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+            text-align: center;
+            max-width: 450px; /* Wider */
+            width: 90%;
+            font-size: 1.1rem;
+            color: #2d3748;
+        }
+        .custom-alert-content button {
+            background-color: #38a169; /* Green button */
+            color: white;
+            padding: 0.7rem 1.5rem; /* More padding */
+            border-radius: 0.6rem; 
+            margin-top: 1.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            font-weight: 600;
+            border: none;
+        }
+        .custom-alert-content button:hover {
+            background-color: #2f855a; /* Darker green on hover */
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container" class="app-container">
+        <!-- Welcome/Username Input Screen -->
+        <div id="welcome-screen" class="welcome-screen">
+            <h2>Welcome to Simple Chat</h2>
+            <p>Please enter your username to join the chat.</p>
+            <input type="text" id="username-input" placeholder="Your username" class="mb-4">
+            <button id="start-chat-button">Start Chat</button>
+        </div>
+
+        <!-- Main Chat Application Layout -->
+        <div id="main-chat-layout" class="main-chat-layout">
+            <div class="sidebar">
+                <div class="sidebar-header">Active Users</div>
+                <div id="active-users-list" class="active-users-list">
+                    <!-- Active users will be listed here -->
+                </div>
+            </div>
+            <div class="chat-area">
+                <div class="chat-header">
+                    Simple Real-time Chat
+                    <div id="connection-status" class="connection-status">Connecting...</div>
+                </div>
+                <div class="messages flex flex-col" id="messages">
+                    <!-- Messages will be appended here -->
+                </div>
+                <!-- Typing Indicator -->
+                <div id="typing-indicator"></div>
+                <div class="input-area flex-col">
+                    <div id="recipient-display" class="recipient-display hidden">
+                        <span>Private message to: <span id="current-recipient-username" class="font-bold"></span></span>
+                        <button id="clear-recipient-btn" class="clear-recipient-btn">&times;</button>
+                    </div>
+                    <div class="flex w-full">
+                        <input type="text" id="message-input" placeholder="Type a message..." class="rounded-full">
+                        <button id="send-button" class="rounded-full"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert Modal (still useful for connection errors) -->
+    <div id="custom-alert-modal" class="custom-alert-modal">
+        <div class="custom-alert-content">
+            <p id="custom-alert-message"></p>
+            <button id="custom-alert-ok-button">OK</button>
+        </div>
+    </div>
+
+    <script>
+        const serverAddress = 'ws://localhost:8765'; 
+        let ws; 
+        let username = '';
+        let currentRecipient = null; 
+        let reconnectAttempts = 0;
+        const MAX_RECONNECT_ATTEMPTS = 5;
+        const RECONNECT_DELAY_MS = 3000; 
+        const TYPING_TIMEOUT_MS = 1500; // Time after last keypress to send 'stopped typing'
+
+        // DOM elements
+        const appContainer = document.getElementById('app-container');
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const mainChatLayout = document.getElementById('main-chat-layout');
+
+        const usernameInput = document.getElementById('username-input');
+        const startChatButton = document.getElementById('start-chat-button');
+        
+        const messagesDiv = document.getElementById('messages');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+        const connectionStatusDiv = document.getElementById('connection-status');
+        const activeUsersListDiv = document.getElementById('active-users-list');
+        const recipientDisplayDiv = document.getElementById('recipient-display');
+        const currentRecipientUsernameSpan = document.getElementById('current-recipient-username');
+        const clearRecipientButton = document.getElementById('clear-recipient-btn');
+        const typingIndicatorDiv = document.getElementById('typing-indicator');
+
+        const customAlertModal = document.getElementById('custom-alert-modal');
+        const customAlertMessage = document.getElementById('custom-alert-message');
+        const customAlertOkButton = document.getElementById('custom-alert-ok-button');
+
+        let typingTimeout;
+        let isTyping = false; // Flag to track if the current user is typing
+        let activeTypers = {}; // Stores {username: timeoutId} for incoming typing notifications
+
+        function showAlert(message) {
+            customAlertMessage.textContent = message;
+            customAlertModal.classList.add('show');
+            console.log('Alert shown:', message); 
+        }
+
+        function hideAlert() {
+            customAlertModal.classList.remove('show');
+            console.log('Alert hidden.'); 
+        }
+
+        customAlertOkButton.addEventListener('click', hideAlert);
+
+        function formatTimestamp(ms) {
+            const date = new Date(ms);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function displayMessage(senderUsername, text, timestamp, isSent = false, isPrivate = false) {
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble');
+            messageBubble.classList.add(isSent ? 'sent' : 'received');
+
+            const usernameSpan = document.createElement('div');
+            usernameSpan.classList.add('username');
+            usernameSpan.textContent = senderUsername;
+
+            const textSpan = document.createElement('div');
+            textSpan.classList.add('text');
+            
+            if (isPrivate) {
+                const privateIndicator = document.createElement('span');
+                privateIndicator.classList.add('private-message-indicator');
+                privateIndicator.textContent = '(Private)';
+                textSpan.appendChild(privateIndicator);
+            }
+            textSpan.appendChild(document.createTextNode(text));
+
+            const timestampSpan = document.createElement('div');
+            timestampSpan.classList.add('timestamp');
+            timestampSpan.textContent = formatTimestamp(timestamp);
+
+            messageBubble.appendChild(usernameSpan);
+            messageBubble.appendChild(textSpan);
+            messageBubble.appendChild(timestampSpan);
+            messagesDiv.appendChild(messageBubble);
+
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function displaySystemMessage(text, timestamp) {
+            const messageBubble = document.createElement('div');
+            messageBubble.classList.add('message-bubble', 'system');
+            
+            const textSpan = document.createElement('div');
+            textSpan.classList.add('text');
+            textSpan.textContent = text;
+
+            const timestampSpan = document.createElement('div');
+            timestampSpan.classList.add('timestamp');
+            timestampSpan.textContent = formatTimestamp(timestamp);
+
+            messageBubble.appendChild(textSpan);
+            messageBubble.appendChild(timestampSpan);
+            messagesDiv.appendChild(messageBubble);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function updateActiveUsersList(users) {
+            activeUsersListDiv.innerHTML = ''; 
+            users.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.classList.add('user-item', 'rounded-md');
+                if (user === username) {
+                    userItem.classList.add('self'); 
+                }
+                if (user === currentRecipient) {
+                    userItem.classList.add('selected'); 
+                }
+
+                const statusDot = document.createElement('span');
+                statusDot.classList.add('user-status-dot');
+                userItem.appendChild(statusDot);
+
+                const userNameText = document.createElement('span');
+                userNameText.textContent = user;
+                userItem.appendChild(userNameText);
+
+                userItem.addEventListener('click', () => {
+                    if (user !== username) { 
+                        currentRecipient = user;
+                        currentRecipientUsernameSpan.textContent = user;
+                        recipientDisplayDiv.classList.remove('hidden');
+                        updateActiveUsersList(users); 
+                        messageInput.focus();
+                        console.log(`WebSocket Debug: Selected private recipient: ${user}`); 
+                    } else {
+                        showAlert("You cannot send a private message to yourself.");
+                        console.log('WebSocket Debug: Attempted to select self for private message.'); 
+                    }
+                });
+                activeUsersListDiv.appendChild(userItem);
+            });
+        }
+
+        // --- Typing Indicator Functions ---
+        function sendTypingStatus(status) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const typingMessage = {
+                    type: "typing_status",
+                    is_typing: status,
+                    username: username // Sender's username
+                };
+                if (currentRecipient) {
+                    typingMessage.recipient = currentRecipient; // For private typing
+                }
+                ws.send(JSON.stringify(typingMessage));
+                console.log(`WebSocket Debug: Sent typing status: ${status ? 'typing' : 'stopped typing'}`);
+            }
+        }
+
+        function updateTypingIndicatorDisplay() {
+            const typers = Object.keys(activeTypers);
+            if (typers.length > 0) {
+                typingIndicatorDiv.textContent = `${typers.join(', ')} is typing...`;
+                typingIndicatorDiv.classList.add('show');
+            } else {
+                typingIndicatorDiv.textContent = '';
+                typingIndicatorDiv.classList.remove('show');
+            }
+        }
+
+        // Debounce for typing status
+        messageInput.addEventListener('input', () => {
+            if (!isTyping) {
+                isTyping = true;
+                sendTypingStatus(true);
+            }
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                isTyping = false;
+                sendTypingStatus(false);
+            }, TYPING_TIMEOUT_MS);
+        });
+        // --- End Typing Indicator Functions ---
+
+        function connectWebSocket() {
+            console.log('WebSocket Debug: Attempting to connect to:', serverAddress);
+            connectionStatusDiv.textContent = 'Connecting...';
+            connectionStatusDiv.style.color = 'rgba(255, 255, 255, 0.8)'; 
+
+            try {
+                ws = new WebSocket(serverAddress);
+
+                ws.onopen = () => {
+                    console.log('WebSocket Debug: Connection Opened successfully.');
+                    connectionStatusDiv.textContent = 'Connected';
+                    connectionStatusDiv.style.color = '#dcf8c6'; 
+                    reconnectAttempts = 0; 
+                    ws.send(JSON.stringify({ type: "register", username: username }));
+                    console.log('WebSocket Debug: Sent registration message for username:', username);
+                };
+
+                ws.onmessage = (event) => {
+                    console.log('WebSocket Debug: Message Received', event.data);
+                    try {
+                        const data = JSON.parse(event.data);
+                        const msgType = data.type;
+
+                        if (msgType === "chat_message") {
+                            // This line ensures the sender sees their own public message
+                            displayMessage(data.username, data.text, data.timestamp, data.username === username);
+                        } else if (msgType === "private_message") {
+                            displayMessage(data.username, data.text, data.timestamp, false, true); 
+                        } else if (msgType === "user_joined") {
+                            displaySystemMessage(`${data.username} has joined the chat.`, data.timestamp);
+                        } else if (msgType === "user_left") {
+                            displaySystemMessage(`${data.username} has left the chat.`, data.timestamp);
+                        } else if (msgType === "update_users") {
+                            updateActiveUsersList(data.users);
+                            console.log('WebSocket Debug: Users list updated:', data.users);
+                        } else if (msgType === "typing_status") {
+                            // Handle incoming typing status
+                            if (data.username !== username) { // Don't show self typing
+                                if (data.is_typing) {
+                                    activeTypers[data.username] = setTimeout(() => {
+                                        delete activeTypers[data.username];
+                                        updateTypingIndicatorDisplay();
+                                    }, TYPING_TIMEOUT_MS * 2); // Give a bit more time before clearing
+                                } else {
+                                    clearTimeout(activeTypers[data.username]);
+                                    delete activeTypers[data.username];
+                                }
+                                updateTypingIndicatorDisplay();
+                            }
+                        }
+                        else if (msgType === "system_message") {
+                            displaySystemMessage(data.text, data.timestamp);
+                        } else {
+                            console.warn("WebSocket Debug: Unknown message type received:", msgType, data);
+                        }
+                    } catch (e) {
+                        console.error("WebSocket Debug: Failed to parse message:", e, event.data);
+                    }
+                };
+
+                ws.onclose = (event) => {
+                    console.log('WebSocket Debug: Connection Closed', { code: event.code, reason: event.reason, wasClean: event.wasClean });
+                    connectionStatusDiv.textContent = 'Disconnected';
+                    connectionStatusDiv.style.color = '#ffcccc'; 
+
+                    if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                        reconnectAttempts++;
+                        console.log(`WebSocket Debug: Attempting to reconnect... (Attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})`);
+                        setTimeout(connectWebSocket, RECONNECT_DELAY_MS);
+                    } else {
+                        showAlert('Failed to connect to the chat server after multiple attempts. Please ensure the Python server is running and try refreshing the page.');
+                    }
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket Debug: Error occurred', error);
+                    connectionStatusDiv.textContent = 'Connection Failed';
+                    connectionStatusDiv.style.color = '#ff6666'; 
+                };
+            } catch (e) {
+                console.error("WebSocket Debug: Error creating WebSocket object:", e);
+                connectionStatusDiv.textContent = 'Connection Error';
+                connectionStatusDiv.style.color = '#ff6666';
+                showAlert('An error occurred while trying to connect to the chat server. Please ensure the Python server is running and the address is correct.');
+            }
+        }
+
+        sendButton.addEventListener('click', () => {
+            const messageText = messageInput.value.trim();
+            if (messageText) { 
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    let message = {};
+                    if (currentRecipient) {
+                        message = {
+                            type: "private_message",
+                            recipient: currentRecipient,
+                            text: messageText
+                        };
+                        displayMessage(username, messageText, Date.now(), true, true); 
+                        console.log('WebSocket Debug: Sent private message:', message);
+                    } else {
+                        message = {
+                            type: "chat_message",
+                            text: messageText
+                        };
+                        // FIX: Display sender's own public message immediately
+                        displayMessage(username, messageText, Date.now(), true, false); 
+                        console.log('WebSocket Debug: Sent public message:', message);
+                    }
+                    ws.send(JSON.stringify(message));
+                    messageInput.value = ''; 
+                    // Ensure typing status is reset after sending a message
+                    clearTimeout(typingTimeout);
+                    if (isTyping) {
+                        isTyping = false;
+                        sendTypingStatus(false);
+                    }
+                } else {
+                    console.warn("WebSocket Debug: Not open, cannot send message.");
+                    showAlert("Cannot send message: Not connected to the chat server. Please check your connection.");
+                }
+            } 
+        });
+
+        messageInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                sendButton.click();
+            }
+        });
+
+        startChatButton.addEventListener('click', () => {
+            const enteredUsername = usernameInput.value.trim();
+            console.log('WebSocket Debug: Start Chat button clicked. Entered username:', enteredUsername);
+            if (enteredUsername) {
+                username = enteredUsername;
+                console.log('WebSocket Debug: Username set:', username);
+                welcomeScreen.classList.add('hidden');
+                mainChatLayout.classList.add('show'); 
+                console.log('WebSocket Debug: Welcome screen hidden, Main chat layout shown.');
+                connectWebSocket(); 
+            } else {
+                console.log('WebSocket Debug: Username is empty. Showing alert.');
+                showAlert('Please enter a username to start chatting.');
+            }
+        });
+
+        usernameInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') {
+                startChatButton.click();
+            }
+        });
+
+        clearRecipientButton.addEventListener('click', () => {
+            currentRecipient = null;
+            recipientDisplayDiv.classList.add('hidden');
+            activeUsersListDiv.querySelectorAll('.user-item.selected').forEach(item => {
+                item.classList.remove('selected');
+            });
+            messageInput.focus();
+            console.log('WebSocket Debug: Private recipient cleared.');
+        });
+
+        window.addEventListener('load', () => {
+            usernameInput.focus();
+            console.log('WebSocket Debug: Page loaded, username input focused.');
+        });
+
+    </script>
+</body>
+</html>
